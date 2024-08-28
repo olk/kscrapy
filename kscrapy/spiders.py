@@ -51,6 +51,7 @@ class KafkaSpiderMixin:
                     # If decoding succeeds, it's a JSON object
                     if isinstance(json_obj, dict) and 'url' in json_obj:
                         url = json_obj['url']
+                        meta = json_obj.get('meta')
                         if self.is_valid_url(url):
                             logging.debug(f"Received valid URL => {url}")
                             return url, meta
