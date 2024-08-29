@@ -93,7 +93,6 @@ class KafkaSpiderMixin:
         """
         kafka_hosts = settings.get('KSCRAPY_BOOTSTRAP_SERVERS', 'localhost:9092')
         consumer_config = settings.get('KSCRAPY_CONSUMER_CONFIG', {})
-        self.batch_size = int(settings.get('SCRAPY_CONSUMER_BATCH_SIZE',1))
         kafka_config = {'bootstrap.servers': kafka_hosts, **consumer_config}
         if 'group.id' not in kafka_config:
             kafka_config['group.id'] = 'kafka-scrapy'
@@ -117,7 +116,7 @@ class KafkaSpiderMixin:
         Consumes messages from Kafka.
         :rtype: scrapy.Request or None
         """
-        messages = self.consumer.consume(num_messages=self.batch_size, timeout=1.0)
+        messages = self.consumer.consume(timeout=1.0)
         if not messages or len(messages) == 0:
             logging.debug('No messages to process')
             return None
