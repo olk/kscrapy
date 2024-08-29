@@ -21,7 +21,9 @@ class KafkaSpiderMixin:
     """
 
     def setup_kafka_producer(self, settings):
-        kafka_config = {'bootstrap.servers': settings.get('KSCRAPY_BOOTSTRAP_SERVERS', 'localhost:9092')}
+        kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
+        if 'bootstrap.servers' not in kafka_config:
+            kafka_config['bootstrap.servers'] = 'localhost:29092'
         self.producer = Producer(kafka_config)
         self.network_error_topic = settings.get('KSCRAPY_ERROR_TOPIC', 'kscrapy_error')
 
@@ -91,16 +93,16 @@ class KafkaSpiderMixin:
         :param settings: The current Scrapy settings being used
         :type settings: scrapy.settings.Settings
         """
-        kafka_hosts = settings.get('KSCRAPY_BOOTSTRAP_SERVERS', 'localhost:9092')
-        consumer_config = settings.get('KSCRAPY_CONSUMER_CONFIG', {})
-        kafka_config = {'bootstrap.servers': kafka_hosts, **consumer_config}
+        kafka_config = settings.get('KSCRAPY_CONSUMER_CONFIG', {})
+        if 'bootstrap.servers' not in kafka_config:
+            kafka_config['bootstrap.servers'] = 'localhost:29092'
         if 'group.id' not in kafka_config:
             kafka_config['group.id'] = 'kafka-scrapy'
         topic = settings.get('KSCRAPY_INPUT_TOPIC', 'kscrapy_input')
         try:
             self.consumer = Consumer(kafka_config)
             self.consumer.subscribe([topic])
-            logging.info(f'Instantiated a kafka consumer subscribed to topic: {topic}. It will consume batches of {self.batch_size} messages with the following configuration: {kafka_config}')
+            logging.info(f'Instantiated a kafka consumer subscribed to topic: {topic}.')
         except KafkaException as e:
             logging.error(f"Failed to connect to Kafka: {e}")
             sys.exit(1)

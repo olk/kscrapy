@@ -48,9 +48,7 @@ class KafkaLogStats:
         Returns:
             KafkaLogStats: Initialized KafkaLogStats instance.
         """
-        kafka_hosts = crawler.settings.get('KSCRAPY_BOOTSTRAP_SERVERS', 'localhost:9092')
-        producer_config = crawler.settings.get('KSCRAPY_PRODUCER_CONFIG', {})
-        kafka_config = {'bootstrap.servers': kafka_hosts, **producer_config}
+        kafka_config = crawler.settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         topic = crawler.settings.get('KSCRAPY_STATS_TOPIC', 'kscrapy_stats')
         kafka_producer = KafkaProducer(kafka_config)
         interval = crawler.settings.getfloat("KAFKA_LOGSTATS_INTERVAL",60.0)

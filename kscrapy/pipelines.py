@@ -60,9 +60,7 @@ class KafkaPublishPipeline:
         topic = settings.get('KSCRAPY_OUTPUT_TOPIC', 'kscrapy_output')
         key = settings.get('KSCRAPY_PRODUCER_KEY', '')
         drcb = settings.get('KSCRAPY_PRODUCER_CALLBACKS', False)
-        kafka_hosts = settings.get('KSCRAPY_BOOTSTRAP_SERVERS', 'localhost:9092')
-        producer_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
-        kafka_config = {'bootstrap.servers': kafka_hosts, **producer_config}
+        kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         kafka_producer = KafkaProducer(kafka_config)
         logging.info(f'Instantiated a kafka producer for topic: {topic} with the following configuration: {kafka_config}')
         return cls(kafka_producer, topic, key, drcb)
