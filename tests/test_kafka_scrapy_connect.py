@@ -39,7 +39,7 @@ class TestSpider(KafkaListeningSpider):
 #=============================================================================================#
 @pytest.fixture
 def kafka_producer():
-    conf = {'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS','localhost:29092')}
+    conf = {'bootstrap.servers': 'localhost:9092')}
     producer = Producer(conf)
     return producer
 
@@ -47,7 +47,7 @@ def kafka_producer():
 def kafka_consumer():
     group_id = str(uuid.uuid4())
     kafka_config = {
-        'bootstrap.servers' : os.getenv('KAFKA_BOOTSTRAP_SERVERS','localhost:29092'),
+        'bootstrap.servers' : 'localhost:9092'),
         'group.id' : 'pytest-' + group_id,
         'auto.offset.reset' : 'earliest'
     }

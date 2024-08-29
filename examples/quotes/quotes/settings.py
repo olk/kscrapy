@@ -21,13 +21,13 @@ KSCRAPY_STATS_TOPIC = 'ScrapyStats'
 KSCRAPY_PRODUCER_KEY = ''
 KSCRAPY_PRODUCER_CALLBACKS = False
 KSCRAPY_PRODUCER_CONFIG = {
-    'bootstrap.servers': 'localhost:29092',
+    'bootstrap.servers': 'localhost:9092',
     'queue.buffering.max.ms' : 1,
     'linger.ms' : 5
 }
 
 KSCRAPY_CONSUMER_CONFIG = {
-    'bootstrap.servers': 'localhost:29092',
+    'bootstrap.servers': 'localhost:9092',
     'group.id':'example-crawler',
     'fetch.wait.max.ms': 10,
     'max.poll.interval.ms': 600000,

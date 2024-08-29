@@ -69,7 +69,7 @@ docker-compose up -d
 sleep 10 
 
 # Log information about connecting to Kafka
-info "Please connect to the following localhost:29092 to access Kafka"
+info "Please connect to the following localhost:9092 to access Kafka"
 
 # Split the topics string into an array
 IFS=',' read -ra TOPIC_PARTITIONS <<< "$TOPICS"

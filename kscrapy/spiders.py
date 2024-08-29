@@ -23,7 +23,7 @@ class KafkaSpiderMixin:
     def setup_kafka_producer(self, settings):
         kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         if 'bootstrap.servers' not in kafka_config:
-            kafka_config['bootstrap.servers'] = 'localhost:29092'
+            kafka_config['bootstrap.servers'] = 'localhost:9092'
         self.producer = Producer(kafka_config)
         self.network_error_topic = settings.get('KSCRAPY_ERROR_TOPIC', 'kscrapy_error')
 
@@ -95,7 +95,7 @@ class KafkaSpiderMixin:
         """
         kafka_config = settings.get('KSCRAPY_CONSUMER_CONFIG', {})
         if 'bootstrap.servers' not in kafka_config:
-            kafka_config['bootstrap.servers'] = 'localhost:29092'
+            kafka_config['bootstrap.servers'] = 'localhost:9092'
         if 'group.id' not in kafka_config:
             kafka_config['group.id'] = 'kafka-scrapy'
         topic = settings.get('KSCRAPY_INPUT_TOPIC', 'kscrapy_input')

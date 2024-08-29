@@ -119,14 +119,14 @@ You can customize producer and consumer settings by providing a dictionary of co
 ```python
 # Example KSCRAPY_PRODUCER_CONFIG
 KSCRAPY_PRODUCER_CONFIG = {
-	'bootstrap.servers': '192.168.10.10:29092',
+	'bootstrap.servers': '192.168.10.10:9092',
 	'compression.type': 'gzip',
 	'request.timeout.ms': 5000
 }
 
 # Example KSCRAPY_CONSUMER_CONFIG
 KSCRAPY_CONSUMER_CONFIG = {
-	'bootstrap.servers': '192.168.10.10:29092',
+	'bootstrap.servers': '192.168.10.10:9092',
 	'fetch.wait.max.ms': 10,
 	'max.poll.interval.ms': 600000,
 	'auto.offset.reset': 'latest'
