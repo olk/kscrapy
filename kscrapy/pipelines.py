@@ -8,7 +8,7 @@ class KafkaPublishPipeline:
     Publishes a serialized item into a Kafka topic.
     """
 
-    def __init__(self, producer, topic, key='', drcb=False):
+    def __init__(self, producer, topic, key='', partition=-1, drcb=False):
         """
         Initializes the Kafka item publisher.
 
@@ -19,6 +19,7 @@ class KafkaPublishPipeline:
         self.producer = producer
         self.topic = topic
         self.key = key
+        self.partition = partition
         self.drcb = drcb
 
     def process_item(self, item, spider):
@@ -33,10 +34,10 @@ class KafkaPublishPipeline:
         if self.drcb:
             # Produce is asynchronous, all it does is enqueue the message to an internal queue
             # Adding flush after every produce effectively makes it synchronous
-            self.producer.produce(self.topic, key=self.key, partition=-1,value=json.dumps(payload), callback=self.delivery_callback)
+            self.producer.produce(self.topic, key=self.key, partition=self.partition, value=json.dumps(payload), callback=self.delivery_callback)
         else:
             logging.debug(f'Publishing results to {self.topic}')
-            self.producer.produce(self.topic, key=self.key, partition=-1,value=json.dumps(payload))
+            self.producer.produce(self.topic, key=self.key, partition=self.partition, value=json.dumps(payload))
         self.producer.poll(0)
         return item
 
@@ -59,11 +60,12 @@ class KafkaPublishPipeline:
         """
         topic = settings.get('KSCRAPY_OUTPUT_TOPIC', 'kscrapy_output')
         key = settings.get('KSCRAPY_PRODUCER_KEY', '')
+        partition = settings.get('KSCRAPY_PRODUCER_PARTITION', -1)
         drcb = settings.get('KSCRAPY_PRODUCER_CALLBACKS', False)
         kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         kafka_producer = KafkaProducer(kafka_config)
         logging.info(f'Instantiated a kafka producer for topic: {topic} with the following configuration: {kafka_config}')
-        return cls(kafka_producer, topic, key, drcb)
+        return cls(kafka_producer, topic, key, partition, drcb)
 
     def close_spider(self, spider):
         """

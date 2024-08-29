@@ -88,6 +88,7 @@ bash ./examples/kafka/kafka_stop.sh
 - `KSCRAPY_CONSUMER_CONFIG` - Additional configuration options for Kafka consumers (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md))
 - `KSCRAPY_PRODUCER_CONFIG` - Additional configuration options for Kafka producers (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md))
 - `KSCRAPY_PRODUCER_KEY` - Key used for partitioning messages in Kafka producer (Default: `""` *Roundrobin*)
+- `KSCRAPY_PRODUCER_PARTITION` - Partition messages are send to in Kafka producer (Default: -1 *use internal partitioner*)
 - `KSCRAPY_PRODUCER_CALLBACKS` - Enable or disable asynchronous message delivery callbacks. (Default: `False`)
 
 ### Customisation
