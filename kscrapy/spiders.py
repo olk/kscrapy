@@ -25,7 +25,7 @@ class KafkaSpiderMixin:
         if 'bootstrap.servers' not in kafka_config:
             kafka_config['bootstrap.servers'] = 'localhost:9092'
         self.producer = Producer(kafka_config)
-        self.network_error_topic = settings.get('KSCRAPY_ERROR_TOPIC', 'kscrapy_error')
+        self.error_topic = settings.get('KSCRAPY_ERROR_TOPIC', 'kscrapy_error')
 
     def process_kafka_message(self, message, meta={}):
         """
@@ -136,9 +136,9 @@ class KafkaSpiderMixin:
         url = failure.request.url
         logging.warning(f'{error}')
         payload = {'url': url, 'error': error}
-        self.publish_failures(self.network_error_topic, payload)
+        self.publish_failures(payload)
 
-    def publish_failures(self, topic, payload):
+    def publish_failures(self, payload):
         logging.debug(f'Publishing failure to {topic}')
         self.producer.produce(self.error_topic, key=self.key, value=json.dumps(payload))
         self.producer.poll()
