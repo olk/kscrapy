@@ -1,14 +1,10 @@
 import logging
-import sys
-import os
-import time
 import datetime
-import json
-from twisted.internet import task, reactor
-from scrapy import signals
+from confluent_kafka import Producer
 from scrapy.exceptions import NotConfigured
+from scrapy import signals
 from scrapy.utils.serialize import ScrapyJSONEncoder
-from confluent_kafka import Producer as KafkaProducer
+from twisted.internet import task, reactor
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +46,7 @@ class KafkaLogStats:
         """
         kafka_config = crawler.settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         topic = crawler.settings.get('KSCRAPY_STATS_TOPIC', 'kscrapy_stats')
-        kafka_producer = KafkaProducer(kafka_config)
+        kafka_producer = Producer(kafka_config)
         interval = crawler.settings.getfloat("KAFKA_LOGSTATS_INTERVAL",60.0)
         summary_interval = crawler.settings.get("KAFKA_LOGSTATS_SUMMARY_INTERVAL","DAILY")
         if not interval or not summary_interval:

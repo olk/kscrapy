@@ -1,7 +1,7 @@
-from confluent_kafka import Producer as KafkaProducer
-from scrapy.exporters import BaseItemExporter
-import logging
 import json
+import logging
+from confluent_kafka import Producer
+from scrapy.exporters import BaseItemExporter
 
 class KafkaPublishPipeline:
     """
@@ -13,7 +13,7 @@ class KafkaPublishPipeline:
         Initializes the Kafka item publisher.
 
         Args:
-            producer (KafkaProducer): The Kafka producer.
+            producer (Producer): The Kafka producer.
             topic (str): The Kafka topic being used.
         """
         self.producer = producer
@@ -63,7 +63,7 @@ class KafkaPublishPipeline:
         partition = settings.get('KSCRAPY_PRODUCER_PARTITION', -1)
         drcb = settings.get('KSCRAPY_PRODUCER_CALLBACKS', False)
         kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
-        kafka_producer = KafkaProducer(kafka_config)
+        kafka_producer = Producer(kafka_config)
         logging.info(f'Instantiated a kafka producer for topic: {topic} with the following configuration: {kafka_config}')
         return cls(kafka_producer, topic, key, partition, drcb)
 
