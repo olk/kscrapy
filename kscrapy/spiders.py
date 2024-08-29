@@ -1,18 +1,17 @@
 # spiders.py
-from scrapy import signals
-from scrapy.http import Request
-from scrapy.exceptions import DontCloseSpider
-from scrapy.spiders import Spider
+import json
+import logging
+import sys
 from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
+from datetime import datetime
+from scrapy.exceptions import DontCloseSpider
+from scrapy.http import Request
+from scrapy import signals
 from scrapy.spidermiddlewares.httperror import HttpError
+from scrapy.spiders import Spider
 from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 from urllib.parse import urlparse
-import os
-import sys
-import logging
-import json
-from datetime import datetime
 
 
 class KafkaSpiderMixin:
@@ -21,6 +20,7 @@ class KafkaSpiderMixin:
     """
 
     def setup_kafka_producer(self, settings):
+        self.key = settings.get('KSCRAPY_PRODUCER_KEY', '')
         kafka_config = settings.get('KSCRAPY_PRODUCER_CONFIG', {})
         if 'bootstrap.servers' not in kafka_config:
             kafka_config['bootstrap.servers'] = 'localhost:9092'
@@ -140,7 +140,7 @@ class KafkaSpiderMixin:
 
     def publish_failures(self, topic, payload):
         logging.debug(f'Publishing failure to {topic}')
-        self.producer.produce(topic, value=json.dumps(payload))
+        self.producer.produce(self.error_topic, key=self.key, value=json.dumps(payload))
         self.producer.poll()
 
     def schedule_next_request(self):
