@@ -81,7 +81,7 @@ class KafkaPublishPipeline:
         kafka_producer = Producer(kafka_config)
         logging.info(f'Instantiated a kafka producer for topics: [{output_topic}, {error_topic}] with the following configuration: {kafka_config}')
         return cls(kafka_producer, output_topic, error_topic, key, partition, drcb)
-    
+
     def on_close_spider(self, spider):
         pass
 

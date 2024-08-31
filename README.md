@@ -36,11 +36,9 @@ You can install `kscrapy` via pip:
 pip install kscrapy
 ```
 
-## Example
+## Examples
 
-A full [example](https://github.com/spicyparrot/kscrapy?tab=readme-ov-file#example) using the `kscrapy` library can be found inside the repo.
-
-The *only prerequisite for walking through the exampl*e is the installation of **Docker**.
+The *only prerequisite for walking through the examples* is the installation of **Docker**.
 
 This is needed because a kafka cluster will be created locally using containers so `kscrapy` can communicate with a broker. 
 
@@ -50,7 +48,7 @@ If all set, follow the below steps
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-git clone https://github.com/spicyparrot/kscrapy.git && cd kscrapy
+git clone https://github.com/olk/kscrapy.git && cd kscrapy
 pip install -r requirements.txt
 ```
 2. Create a local kafka cluster with required topics:
@@ -59,20 +57,38 @@ pip install -r requirements.txt
 bash ./examples/kafka/kafka_start.sh --input-topic ScrapyInput,1 --output-topic ScrapyOutput,1 --error-topic ScrapyError,1 --stats-topic ScrapyStats,1
 ```
 
-3. Initiate the spider:
+### simple spider
+
+1. Initiate the spider:
 ```bash
 cd examples/quotes && scrapy crawl quotes
 ```
-
-4. Publish a message to the input kafka topic and watch the spider consume and process the mesasge
+2. Publish a message to the input kafka topic and watch the spider consume and process the mesasge
    1.  This will require some custom producer code to publish messages or go to http://localhost:8080
    2. Navigate in the UI to `Topics` section and click on topic `InputTopic` (the topic the scraper is listening to).
    3. Hit `Produce Message` for topic `InputTopic` and add `https://quotes.toscrape.com/` as `Value` (leave `Key` blank).
    4. After publishing the message the scrape starts to parse `https://quotes.toscrape.com/`.
    5. The quotes scraper produces some messages for the `ScrapyOutput` topic (register `Messages` for `ScrapyOutput` topic in the UI) containing the parsed quotes. 
 
+3. When satisfied with testing, exit the spider and clean up the local kafka cluster:
+```bash
+bash ./examples/kafka/kafka_stop.sh
+```
 
-5. When satisfied with testing, exit the spider and clean up the local kafka cluster:
+### crawling spider
+
+1. Initiate the spider:
+```bash
+cd examples/books && scrapy crawl books
+```
+2. Publish a message to the input kafka topic and watch the spider consume and process the mesasge
+   1.  This will require some custom producer code to publish messages or go to http://localhost:8080
+   2. Navigate in the UI to `Topics` section and click on topic `InputTopic` (the topic the scraper is listening to).
+   3. Hit `Produce Message` for topic `InputTopic` and add `https://books.toscrape.com/` as `Value` (leave `Key` blank).
+   4. After publishing the message the scrape starts crawling and parsing `https://books.toscrape.com/`.
+   5. The quotes scraper produces some messages for the `ScrapyOutput` topic (register `Messages` for `ScrapyOutput` topic in the UI) containing the parsed quotes. 
+
+3. When satisfied with testing, exit the spider and clean up the local kafka cluster:
 ```bash
 bash ./examples/kafka/kafka_stop.sh
 ```
@@ -95,7 +111,7 @@ bash ./examples/kafka/kafka_stop.sh
 
 ---
 
-**Customising deserialisation** 
+**Customising deserialisation**
 
 You can customize how Kafka messages are deserialized by overriding the process_kafka_message method in your spider class. 
 

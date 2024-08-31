@@ -8,7 +8,7 @@ from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
 from scrapy import signals
 from scrapy.spidermiddlewares.httperror import HttpError
-from scrapy.spiders import Spider
+from scrapy.spiders import Spider, CrawlSpider
 from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 from urllib.parse import urlparse
@@ -180,5 +180,20 @@ class KafkaSpider(KafkaSpiderMixin, Spider):
         :type crawler: scrapy.crawler.Crawler
         """
         super(KafkaSpider, self)._set_crawler(crawler)
+        self.setup_kafka_consumer(crawler.settings)
+        self.setup_kafka_producer(crawler.settings)
+
+
+class KafkaCrawlSpider(KafkaSpiderMixin, CrawlSpider):
+    """
+    Spider that listens to a Kafka topic for incoming messages and initiates crawling.
+    """
+
+    def _set_crawler(self, crawler):
+        """
+        Sets up the crawler.
+        :type crawler: scrapy.crawler.Crawler
+        """
+        super(KafkaCrawlSpider, self)._set_crawler(crawler)
         self.setup_kafka_consumer(crawler.settings)
         self.setup_kafka_producer(crawler.settings)
