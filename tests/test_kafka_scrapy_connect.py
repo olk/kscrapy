@@ -14,11 +14,11 @@ from scrapy.settings import Settings
 SCRIPT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.abspath(f'{SCRIPT_DIRECTORY}/../'))
 
-from kscrapy.spiders import KafkaListeningSpider
+from kscrapy.spiders import KafkaSpider
 #from kscrapy.spiders import KafkaSpiderMixin
 from kscrapy.pipelines import KafkaPublishPipeline
 
-class TestSpider(KafkaListeningSpider):
+class TestSpider(KafkaSpider):
     name = 'test-spider'
 
     def process_kafka_input_message(self, message):

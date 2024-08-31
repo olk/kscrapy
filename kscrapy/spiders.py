@@ -169,7 +169,7 @@ class KafkaSpiderMixin:
         self.producer.close()
 
 
-class KafkaListeningSpider(KafkaSpiderMixin, Spider):
+class KafkaSpider(KafkaSpiderMixin, Spider):
     """
     Spider that listens to a Kafka topic for incoming messages and initiates crawling.
     """
@@ -179,6 +179,6 @@ class KafkaListeningSpider(KafkaSpiderMixin, Spider):
         Sets up the crawler.
         :type crawler: scrapy.crawler.Crawler
         """
-        super(KafkaListeningSpider, self)._set_crawler(crawler)
+        super(KafkaSpider, self)._set_crawler(crawler)
         self.setup_kafka_consumer(crawler.settings)
         self.setup_kafka_producer(crawler.settings)

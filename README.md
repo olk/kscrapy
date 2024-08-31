@@ -102,7 +102,7 @@ You can customize how Kafka messages are deserialized by overriding the process_
 This allows for handling custom message formats or data transformations.
 
 ```python
-class CustomSpider(KafkaListeningSpider):
+class CustomSpider(KafkaSpider):
 	def process_kafka_message(self, message, meta={}, headers={}):
 		# Custom deserialization logic
 		# Return URL, metadata or None if extraction fails

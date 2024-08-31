@@ -7,9 +7,9 @@ SCRIPT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.insert(0, os.path.abspath(f'{SCRIPT_DIRECTORY}/../../../../'))
 
-from kscrapy.spiders import KafkaListeningSpider
+from kscrapy.spiders import KafkaSpider
 
-class TestKafkaSpider(KafkaListeningSpider):
+class TestKafkaSpider(KafkaSpider):
     name = "quotes"
 
     # Override process_kafka_message to suit your serializer type or use default method which can parse JSON / string serialized messages
