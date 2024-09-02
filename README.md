@@ -1,137 +1,202 @@
 [![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-3918) [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-31013/) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3117/)
-## kscrapy 
+## kscrapy
+**kscrapy** is a specialized extension of the Scrapy framework designed to integrate seamlessly with Apache Kafka, enabling robust, scalable, and efficient
+web scraping with real-time data streaming capabilities. This integration leverages Kafka’s distributed streaming platform to enhance the data processing
+workflow, making it ideal for high-throughput, distributed web crawling tasks.
 
 ### Overview
+**kscrapy** extends the core functionalities of Scrapy by introducing Kafka-based spiders and pipelines, which allow direct communication with Kafka topics.
+This integration facilitates a seamless flow of data between your Scrapy spiders and Kafka, enabling scalable and resilient data pipelines. Additionally,
+a custom extension is provided to publish log statistics to a Kafka topic at the end of each day, allowing for detailed offline analysis of your spider's
+performance.
 
-`kscrapy` is a custom Scrapy library that integrates Scrapy with Kafka.
-
-It consists of two main components: spiders and pipelines, which interact with Kafka for message consumption and item publishing.
-
-The library also comes with a custom extension that publishes log stats to a kafka topic at EoD, which allows the user to analyse offline how well the spider is performing!
-
-This project is based on the great work undertaken in: https://github.com/dfdeshom/scrapy-kafka and https://github.com/spicyparrot/kafka_scrapy_connect.
-
-`kscrapy` utilises [Confluent's](https://github.com/confluentinc/confluent-kafka-python) Kafka Python client under the hood, to provide high-level producer and consumer features.
+This project builds upon the foundational work of [scrapy-kafka](https://github.com/dfdeshom/scrapy-kafka) and
+[kafka_scrapy_connect](https://github.com/spicyparrot/kafka_scrapy_connect), incorporating Confluent’s Kafka Python client to provide advanced producer
+and consumer features.
 
 ## Features
-
-**Integration with Kafka**
-   - Enables communication between Scrapy spiders and Kafka topics for efficient data processing.
-   - Through partitions and consumer groups message processing can be parallelised across multiple spiders!
-   - Reduces overhead and improves throughput by giving the user the ability to consume messages in batches.
+**Kafka Integration**
+   - **Seamless Communication:** Integrates Scrapy spiders with Kafka topics, enabling the efficient flow of data from crawled web pages to your Kafka-based data pipeline.
+   - **Parallel Processing:** Leverages Kafka’s partitioning and consumer group features to parallelize message processing across multiple spiders, improving throughput and reducing latency.
+   - **Batch Processing:** Allows the consumption of messages in batches, enhancing performance and reducing overhead by minimizing the number of individual operations.
 
 **Customizable Settings**
-   - Provides flexibility through customisable configuration for both consumers and producers.
+   - **Flexible Configuration**: kscrapy provides extensive customization options for Kafka consumers and producers. Users can configure various settings to tailor the behavior of spiders and pipelines to their specific needs.
 
 **Error Handling**
-   - Automatically handles network errors during crawling and publishes failed URLs to a designated output topic. 
+   - **Resilient Crawling:** Automatically manages network errors encountered during crawling by publishing the URLs that failed to a designated error topic. This ensures that no data is lost and that failed attempts can be retried or analyzed later.
 
 **Serialisation Customisation**
-   - Allows users to customize how Kafka messages are deserializsd by overriding the process_kafka_message method.
+   - **Custom Message Handling:** Users can override the process_kafka_message method in their spider classes to define custom deserialization logic. This feature allows for handling complex message formats or applying specific data transformations before processing.
+
+**Custom Stats Extension**
+   - **Performance Monitoring:** Includes a custom Scrapy extension that logs basic scraping statistics at regular intervals and publishes detailed end-of-day summaries to a specified Kafka topic. This feature is invaluable for monitoring and optimizing spider performance.
 
 ## Installation
-
 You can install `kscrapy` via pip:
 ```
 pip install kscrapy
 ```
 
-## Examples
+## Getting Started
+### Prerequisites
+   - **Docker:** Docker is required to set up a local Kafka cluster. This cluster is necessary for running the kscrapy examples and for enabling communication between kscrapy spiders and Kafka brokers.
 
-The *only prerequisite for walking through the examples* is the installation of **Docker**.
-
-This is needed because a kafka cluster will be created locally using containers so `kscrapy` can communicate with a broker. 
-
-If all set, follow the below steps
-
-1. Create a virtual environment, clone the repo and install requirements:
+### Setup Instructions
+1. **Create a Virtual Environment:**
+   - Set up a virtual environment to isolate your Python dependencies:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+2. **Clone the kscrapy repository and install the required dependencies:**
+```bash
 git clone https://github.com/olk/kscrapy.git && cd kscrapy
 pip install -r requirements.txt
 ```
-2. Create a local kafka cluster with required topics:
 
+3. **Launch a Local Kafka Cluster:**
+   - Use the provided script to start a Kafka cluster with the required topics:
 ```bash
 bash ./examples/kafka/kafka_start.sh --input-topic ScrapyInput,1 --output-topic ScrapyOutput,1 --error-topic ScrapyError,1 --stats-topic ScrapyStats,1
 ```
 
-### simple spider
+### Example: Simple Spider
+This example demonstrates how to use a basic kscrapy spider to consume URLs from a Kafka topic and scrape data from the corresponding web pages.
 
-1. Initiate the spider:
+1. **Run the Spider:**
+   - Navigate to the quotes example directory and start the spider:
 ```bash
 cd examples/quotes && scrapy crawl quotes
 ```
-2. Publish a message to the input kafka topic and watch the spider consume and process the mesasge
-   1.  This will require some custom producer code to publish messages or go to http://localhost:8080
-   2. Navigate in the UI to `Topics` section and click on topic `InputTopic` (the topic the scraper is listening to).
-   3. Hit `Produce Message` for topic `InputTopic` and add `https://quotes.toscrape.com/` as `Value` (leave `Key` blank).
-   4. After publishing the message the scrape starts to parse `https://quotes.toscrape.com/`.
-   5. The quotes scraper produces some messages for the `ScrapyOutput` topic (register `Messages` for `ScrapyOutput` topic in the UI) containing the parsed quotes. 
 
-3. When satisfied with testing, exit the spider and clean up the local kafka cluster:
+2. **Publish a Message to Kafka:**
+   - You can publish a URL to the Kafka input topic using custom producer code or by using the Kafka UI at http://localhost:8080:
+   - Navigate to the Topics section in the Kafka-UI, select InputTopic, and publish a message with the URL https://quotes.toscrape.com/.
+   - The spider will consume the message, start crawling the provided URL, and publish the scraped data to the ScrapyOutput topic.
+
+3. **Cleanup:**
+   - After completing the test, stop the spider and clean up the local Kafka cluster:
 ```bash
 bash ./examples/kafka/kafka_stop.sh
 ```
 
-### crawling spider
+### Example: Crawling Spider
+This example demonstrates how to use a crawling spider that not only scrapes data from a single page but also follows links to scrape additional pages.
 
-1. Initiate the spider:
+1. **Run the Crawling Spider:**
+   - Navigate to the books example directory and start the spider:
 ```bash
 cd examples/books && scrapy crawl books
 ```
-2. Publish a message to the input kafka topic and watch the spider consume and process the mesasge
-   1.  This will require some custom producer code to publish messages or go to http://localhost:8080
-   2. Navigate in the UI to `Topics` section and click on topic `InputTopic` (the topic the scraper is listening to).
-   3. Hit `Produce Message` for topic `InputTopic` and add `https://books.toscrape.com/` as `Value` (leave `Key` blank).
-   4. After publishing the message the scrape starts crawling and parsing `https://books.toscrape.com/`.
-   5. The quotes scraper produces some messages for the `ScrapyOutput` topic (register `Messages` for `ScrapyOutput` topic in the UI) containing the parsed quotes. 
 
-3. When satisfied with testing, exit the spider and clean up the local kafka cluster:
+2. **Publish a Message to Kafka:**
+   - Publish a message with the URL https://books.toscrape.com/ to the Kafka InputTopic.
+   - The spider will crawl the site, follow links, and scrape data, publishing the results to the ScrapyOutput topic.
+
+3. **Cleanup:**
+   - After completing the test, stop the spider and clean up the local Kafka cluster:
 ```bash
 bash ./examples/kafka/kafka_stop.sh
 ```
 
 ## Usage
-
-### Custom Settings
-`kscrapy` supports the following custom settings:
-
-- `KSCRAPY_INPUT_TOPIC`	- Topic from which the spider[s] *consumes* messages from. (Default: `ScrapyInput`)
-- `KSCRAPY_OUTPUT_TOPIC` - Topic where scraped items are published. (Default: `ScrapyOutput`)
-- `KSCRAPY_ERROR_TOPIC`	- Topic for publishing URLs that failed due to *network errors*. (Default: `ScrapyError`)
-- `KSCRAPY_CONSUMER_CONFIG` - Additional configuration options for Kafka consumers (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md))
-- `KSCRAPY_PRODUCER_CONFIG` - Additional configuration options for Kafka producers (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md))
-- `KSCRAPY_PRODUCER_KEY` - Key used for partitioning messages in Kafka producer (Default: `""` *Roundrobin*)
-- `KSCRAPY_PRODUCER_PARTITION` - Partition messages are send to in Kafka producer (Default: -1 *use internal partitioner*)
-- `KSCRAPY_PRODUCER_CALLBACKS` - Enable or disable asynchronous message delivery callbacks. (Default: `False`)
-
-### Customisation
-
----
-
-**Customising deserialisation**
-
-You can customize how Kafka messages are deserialized by overriding the process_kafka_message method in your spider class. 
-
-This allows for handling custom message formats or data transformations.
+### Implementing a Listening Spider
+To create a spider that listens for messages from a Kafka topic, inherit from **KafkaSpider** and implement the parse method:
 
 ```python
-class CustomSpider(KafkaSpider):
+class TestKafkaSpider(KafkaSpider):
+    name = "quotes"
+
+    def parse(self, response):
+        logging.info(f'Received a response ...{response}')
+        for quote in response.xpath('//div[@class="quote"]'):
+            yield {
+                'text' : quote.xpath('./span[@class="text"]/text()').extract_first(),
+                'author' : quote.xpath('.//small[@class="author"]/text()').extract_first(),
+                'tags' : quote.xpath('.//div[@class="tags"]/a[@class="tag"]/text()').extract()
+            }
+```
+
+### Implementing a Listening Crawling Spider
+For more complex use cases, you can create a crawling spider by inheriting from **KafkaCrawlSpider**. This allows the spider to follow links and scrape data from multiple pages:
+
+```python
+class TestKafkaCrawlSpider(KafkaCrawlSpider):
+    name = "books"
+    
+    rules = (
+            Rule(LinkExtractor(allow='index.html',
+                               deny=[
+                                   'catalogue/page',
+                                   'catalogue/category/books',
+                                   'https://books.toscrape.com/index.html']
+                               ), callback='parse', follow=True),
+            Rule(LinkExtractor(allow='catalogue/page'), follow=True)
+    )
+
+    def parse(self, response):
+        item = {
+                'title': response.xpath('//h1/text()').get(),
+                'price': response.xpath('//div[contains(@class, "product_main")]/p[@class="price_color"]/text()').get(),
+                'url': response.url
+        }
+        logging.info(f'parsed item ...{item}')
+        yield item
+```
+
+### Implementing a Pipeline that Publishes to Kafka
+To publish the results or errors of your scraping tasks to Kafka topics, inherit from **KafkaPublishPipeline**:
+
+```python
+class TestKafkaPipeline(KafkaPublishPipeline):
+    seen = False
+
+    def on_process_item(self, item, spider):
+	# Custom processing logic
+        if item["author"] is None:
+	    # Filter out item
+            raise DropItem("property author not found")
+
+        self.seen = True
+
+    def on_close_spider(self, spider):
+        if False == self.seen:
+            # report error to Kafka error topic
+            raise KafkaReportError("no quotes")
+```
+
+The method **on_process_item** can be customized in order to filter out items from the pipeline while **on_close_spider** is used to report errors on closing the pipeline.
+
+## Customisation
+### Custom Settings
+**kscrapy** supports various custom settings to fine-tune the Kafka integration:
+
+- `KSCRAPY_INPUT_TOPIC`	- The Kafka topic from which the spider consumes messages. Default: `ScrapyInput`.
+- `KSCRAPY_OUTPUT_TOPIC` - The Kafka topic where the scraped items are published. Default: `ScrapyOutput`.
+- `KSCRAPY_ERROR_TOPIC`	- The Kafka topic where URLs that failed due to network errors are published. Default: `ScrapyError`.
+- `KSCRAPY_CONSUMER_CONFIG` - Additional Kafka consumer configuration options (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md)).
+- `KSCRAPY_PRODUCER_CONFIG` - Additional Kafka producer configuration options (see [here](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md)).
+- `KSCRAPY_PRODUCER_KEY` - The key used for partitioning messages in the Kafka producer. Default: `""` (Round-robin).
+- `KSCRAPY_PRODUCER_PARTITION` - The Kafka partition where messages are sent. Default: `-1` (use internal partitioner).
+- `KSCRAPY_PRODUCER_CALLBACKS` -  Enable or disable asynchronous message delivery callbacks. Default: `False`.
+  
+### Customising deserialisation
+You can override the **process_kafka_message** method to customize how Kafka messages are deserialized. This is useful for handling custom message formats or performing specific data transformations:
+
+```python
+class TestKafkaSpider(KafkaSpider):
 	def process_kafka_message(self, message, meta={}, headers={}):
 		# Custom deserialization logic
 		# Return URL, metadata or None if extraction fails
 		pass
 ```
 
-*By default*, if no custom `process_kafka_message` method is provided, the spider method `process_kafka_message` **will expect** a JSON payload or a string containing a valid url. If it's a JSON object, it expects `url` in the K/V pair.
+By default, if no custom **process_kafka_message** method is provided, the spider expects a JSON payload or a string containing a valid URL. If a JSON object is provided,
 
----
-
-**Customising Producer & Consumer settings**
-
-You can customize producer and consumer settings by providing a dictionary of configuration options in your Scrapy settings under `KSCRAPY_PRODUCER_CONFIG` and `KSCRAPY_CONSUMER_CONFIG`.
+### Customising Producer & Consumer settings
+Provide a dictionary of options in Scrapy settings:
 
 ```python
 # Example KSCRAPY_PRODUCER_CONFIG
@@ -149,17 +214,15 @@ KSCRAPY_CONSUMER_CONFIG = {
 	'auto.offset.reset': 'latest'
 }
 ```
----
-**Custom stats extensions**
 
-`kscrapy` comes with a custom Scrapy stats extension that:
+### Custom stats extensions
+**kscrapy** provides a custom Scrapy stats extension to log and publish statistics to a Kafka topic:
+
 1. logs basic scraping statistics every minute (*frequency can be configured by the scrapy setting* `KAFKA_LOGSTATS_INTERVAL`)
 2. At **end-of-day**, will publish logging statistics to a Kafka topic (specified by the scrapy setting `KSCRAPY_STATS_TOPIC`).
    1. Each summary message will be published with a key specifying the summary date (`2024-02-27`) for easy identification.
-3.	If the spider is shutdown or closed, due to a deployment etc, a summary payload will also be sent to a kafka topic (`KSCRAPY_STATS_TOPIC`)
+   2. If the spider is shutdown or closed, due to a deployment etc, a summary payload will also be sent to a kafka topic (`KSCRAPY_STATS_TOPIC`)
 
-
-To enable this custom extension, disable the standard LogStats extension and modify your `settings.py` to include the below:
 ```
 # Kafka topic for capturing stats
 KSCRAPY_STATS_TOPIC = 'ScrapyStats'
@@ -171,7 +234,7 @@ EXTENSIONS = {
 }
 ```
 
-An example payload sent to the statistics topic will look like:
+An example payload sent to the stats topic might look like:
 ```json
 {
 	"pages_crawled": 3,
