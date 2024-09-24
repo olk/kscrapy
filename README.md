@@ -31,6 +31,9 @@ and consumer features.
 
 **Custom Stats Extension**
    - **Performance Monitoring:** Includes a custom Scrapy extension that logs basic scraping statistics at regular intervals and publishes detailed end-of-day summaries to a specified Kafka topic. This feature is invaluable for monitoring and optimizing spider performance.
+	
+**Playwright Integration**
+   - **Rendering dynamic webpages:** kscrapy integrates with Playwright to enable the automatic rendering of dynamic webpages.
 
 ## Installation
 You can install `kscrapy` via pip:
@@ -73,7 +76,7 @@ cd examples/quotes && scrapy crawl quotes
 
 2. **Publish a Message to Kafka:**
    - You can publish a URL to the Kafka input topic using custom producer code or by using the Kafka UI at http://localhost:8080:
-   - Navigate to the Topics section in the Kafka-UI, select InputTopic, and publish a message with the URL https://quotes.toscrape.com/.
+   - Navigate to the Topics section in the Kafka-UI, select InputTopic, and publish a message with the URL http://quotes.toscrape.com/scroll.
    - The spider will consume the message, start crawling the provided URL, and publish the scraped data to the ScrapyOutput topic.
 
 3. **Cleanup:**
@@ -181,6 +184,8 @@ The method **on_process_item** can be customized in order to filter out items fr
 - `KSCRAPY_PRODUCER_KEY` - The key used for partitioning messages in the Kafka producer. Default: `""` (Round-robin).
 - `KSCRAPY_PRODUCER_PARTITION` - The Kafka partition where messages are sent. Default: `-1` (use internal partitioner).
 - `KSCRAPY_PRODUCER_CALLBACKS` -  Enable or disable asynchronous message delivery callbacks. Default: `False`.
+- `KSCRAPY_PRODUCER_CALLBACKS` -  Enable or disable asynchronous message delivery callbacks. Default: `False`.
+- `KSCRAPY_USE_PLAYWRIGHT` -  Enable or disable the use of Playwright. Default: `False`.
   
 ### Customising deserialisation
 You can override the **process_kafka_message** method to customize how Kafka messages are deserialized. This is useful for handling custom message formats or performing specific data transformations:
@@ -193,7 +198,7 @@ class TestKafkaSpider(KafkaSpider):
 		pass
 ```
 
-By default, if no custom **process_kafka_message** method is provided, the spider expects a JSON payload or a string containing a valid URL. If a JSON object is provided,
+By default, if no custom **process_kafka_message** method is provided, the spider expects a JSON payload or a string containing a valid URL. If a JSON object is provided, iT EXPECTS URL IN THE k/v PAIR.
 
 ### Customising Producer & Consumer settings
 Provide a dictionary of options in Scrapy settings:
@@ -250,4 +255,57 @@ An example payload sent to the stats topic might look like:
 	"max_memory": 76136448,
 	"elapsed_time": 454.23
 }
+```
+
+### Playwright Integration
+** kscrapy** integrates with Playwright to enable the automatic rendering of dynamic webpages:
+
+1. Install `playwright` via `pip`.
+2. Run `playwright install chromium --with-deps`.
+3. Install `scrapy-playwright` via `pip`.
+4. Set `KSCRAPY_USE_PLAYWRIGHT` to `True` in Scrapy settings file `settings.py`.
+5. Add Playwright configuration options (headless, timeout etc.) in Scrapy settings file `settings.py`.
+
+
+```
+# playwright settings
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+
+PLAYWRIGHT_LAUNCH_OPTIONS = {
+    "headless": True,
+    "timeout": 20 * 1000,  # 20 seconds
+}
+
+
+# Scrapy kafka connect settings
+KSCRAPY_USE_PLAYWRIGHT = True
+...
+```
+
+```python
+class TestKafkaSpider(KafkaSpider):
+    name = "quotes"
+
+    async def parse(self, response):
+        logging.info(f'Received a response ...{response}')
+        page = response.meta["playwright_page"]
+        await page.wait_for_selector("div.quote")
+        await page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+        for i in range (2,11):
+            pos = i * 10
+            await page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+            await page.wait_for_selector(f"div.quote:nth-child({pos})")
+
+        html = await page.content()
+        await page.close()
+        selector = scrapy.Selector(text=html)
+        for quote in selector.css('.quote'):
+            yield {
+                    'text' : quote.css('.text ::text').extract_first(),
+                    'author' : quote.css('.author ::text').extract_first(),
+                    'tags' : quote.css('.tag ::text').extract()
+                }
 ```

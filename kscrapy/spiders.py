@@ -27,6 +27,7 @@ class KafkaSpiderMixin:
         self.producer = Producer(kafka_config)
         self.error_topic = settings.get('KSCRAPY_ERROR_TOPIC', 'kscrapy_error')
 
+
     def process_kafka_message(self, message, meta={}):
         """
         Extracts URLs from a Kafka message.
@@ -56,7 +57,7 @@ class KafkaSpiderMixin:
                         meta = json_obj.get('meta')
                         if self.is_valid_url(url):
                             logging.debug(f"Received valid URL => {url}")
-                            return url, meta
+                            return url, {} if meta is None else meta
                         else:
                             logging.warning(f"Invalid URL => {url}")
                             return None
@@ -76,6 +77,7 @@ class KafkaSpiderMixin:
             logging.warn(f"Error processing message: {e}")
             return None
 
+
     def is_valid_url(self, url):
         """
         Checks if a URL is valid.
@@ -86,6 +88,7 @@ class KafkaSpiderMixin:
         """
         parsed_url = urlparse(url)
         return parsed_url.scheme in ['http', 'https'] and bool(parsed_url.netloc)
+
 
     def setup_kafka_consumer(self, settings):
         """
@@ -106,11 +109,13 @@ class KafkaSpiderMixin:
         except KafkaException as e:
             logging.error(f"Failed to connect to Kafka: {e}")
             sys.exit(1)
+        self.use_playwright = settings.get('KSCRAPY_USE_PLAYWRIGHT', False)
         # Call idle signal when there are no requests left
         self.crawler.signals.connect(self.spider_idle, signal=signals.spider_idle)
         self.crawler.signals.connect(self.item_scraped, signal=signals.item_scraped)
         logging.info(f'Connected with the following config: {kafka_config}')
         logging.info(f"Listening to Kafka topic {settings.get('KSCRAPY_INPUT_TOPIC')} for incoming messages.")
+
 
     def fetch_next_request(self):
         """
@@ -126,10 +131,14 @@ class KafkaSpiderMixin:
         for message in messages:
             result = self.process_kafka_message(message)
             if result is not None:
-            #if request_url:
-                url,meta = result
+                url, meta = result
                 logging.debug(f'Crawling {url}')
-                yield Request(url=url, meta=meta,dont_filter=True, errback=self.network_error_cb)
+                if self.use_playwright:
+                    meta['playwright'] = True
+                    meta['playwright_include_page'] = True
+
+                yield Request(url=url, meta=meta, dont_filter=True, errback=self.network_error_cb)
+
 
     def network_error_cb(self, failure):
         error = f'Network request failure: {repr(failure)}'
@@ -138,10 +147,12 @@ class KafkaSpiderMixin:
         payload = {'url': url, 'error': error}
         self.publish_failures(payload)
 
+
     def publish_failures(self, payload):
         logging.debug(f'Publishing failure to {topic}')
         self.producer.produce(self.error_topic, key=self.key, value=json.dumps(payload))
         self.producer.poll()
+
 
     def schedule_next_request(self):
         """Schedules the next request if available."""
@@ -149,15 +160,18 @@ class KafkaSpiderMixin:
             self.crawler.engine.crawl(request)
             logging.debug("Scheduled next request.")
 
+
     def spider_idle(self):
         """Schedules a request if available, otherwise waits."""
         self.schedule_next_request()
         logging.debug("Spider is idle.")
         raise DontCloseSpider
 
+
     def item_scraped(self, *args, **kwargs):
         """Schedules the next request after an item has been scraped."""
         self.schedule_next_request()
+
 
     def close_spider(self, spider):
         """

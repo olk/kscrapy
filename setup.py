@@ -6,7 +6,7 @@ README_MD = open(os.path.join(MY_DIR, 'README.md')).read()
 
 setup(
     name='kscrapy',
-    version='0.1.0',
+    version='0.1.1',
     description='Integrating Scrapy with kafka using the confluent-kafka python client',
     long_description=README_MD,
     long_description_content_type="text/markdown",

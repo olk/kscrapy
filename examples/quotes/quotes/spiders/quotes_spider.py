@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import logging
+import scrapy
 
 SCRIPT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
@@ -21,11 +22,22 @@ class TestKafkaSpider(KafkaSpider):
     #     return url
 
 
-    def parse(self, response):
+    async def parse(self, response):
         logging.info(f'Received a response ...{response}')
-        for quote in response.xpath('//div[@class="quote"]'):
+        page = response.meta["playwright_page"]
+        await page.wait_for_selector("div.quote")
+        await page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+        for i in range (2,11):
+            pos = i * 10
+            await page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+            await page.wait_for_selector(f"div.quote:nth-child({pos})")
+
+        html = await page.content()
+        await page.close()
+        selector = scrapy.Selector(text=html)
+        for quote in selector.css('.quote'):
             yield {
-                'text' : quote.xpath('./span[@class="text"]/text()').extract_first(),
-                'author' : quote.xpath('.//small[@class="author"]/text()').extract_first(),
-                'tags' : quote.xpath('.//div[@class="tags"]/a[@class="tag"]/text()').extract()
-            }
+                    'text' : quote.css('.text ::text').extract_first(),
+                    'author' : quote.css('.author ::text').extract_first(),
+                    'tags' : quote.css('.tag ::text').extract()
+                }
