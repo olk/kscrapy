@@ -1,16 +1,11 @@
-# spiders.py
 import json
 import logging
 import sys
 from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
-from datetime import datetime
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
 from scrapy import signals
-from scrapy.spidermiddlewares.httperror import HttpError
 from scrapy.spiders import Spider, CrawlSpider
-from twisted.internet.error import DNSLookupError
-from twisted.internet.error import TimeoutError, TCPTimedOutError
 from urllib.parse import urlparse
 
 
@@ -62,7 +57,7 @@ class KafkaSpiderMixin:
                             logging.warning(f"Invalid URL => {url}")
                             return None
                     else:
-                        logging.warn(f"Invalid JSON format => {json_obj}")
+                        logging.warning(f"Invalid JSON format => {json_obj}")
                         return None
                 except  json.decoder.JSONDecodeError:
                     message = message.value().decode()
@@ -71,10 +66,10 @@ class KafkaSpiderMixin:
                         logging.debug(f"Received valid URL => {message}")
                         return message, meta
                     else:
-                        logging.warn(f"Message is not a valid URL => {message}")
+                        logging.warning(f"Message is not a valid URL => {message}")
                         return None
         except ValueError as e:
-            logging.warn(f"Error processing message: {e}")
+            logging.warning(f"Error processing message: {e}")
             return None
 
 
@@ -149,7 +144,7 @@ class KafkaSpiderMixin:
 
 
     def publish_failures(self, payload):
-        logging.debug(f'Publishing failure to {topic}')
+        logging.debug(f'Publishing failure to {self.error_topic}')
         self.producer.produce(self.error_topic, key=self.key, value=json.dumps(payload))
         self.producer.poll()
 
