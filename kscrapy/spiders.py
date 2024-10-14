@@ -105,6 +105,7 @@ class KafkaSpiderMixin:
             logging.error(f"Failed to connect to Kafka: {e}")
             sys.exit(1)
         self.use_playwright = settings.get('KSCRAPY_USE_PLAYWRIGHT', False)
+        self.dont_filter = settings.get('KSCRAPY_DONT_FILTER', False)
         # Call idle signal when there are no requests left
         self.crawler.signals.connect(self.spider_idle, signal=signals.spider_idle)
         self.crawler.signals.connect(self.item_scraped, signal=signals.item_scraped)
@@ -132,7 +133,7 @@ class KafkaSpiderMixin:
                     meta['playwright'] = True
                     meta['playwright_include_page'] = True
 
-                yield Request(url=url, meta=meta, dont_filter=True, errback=self.network_error_cb)
+                yield Request(url=url, meta=meta, dont_filter=self.dont_filter, errback=self.network_error_cb)
 
 
     def network_error_cb(self, failure):

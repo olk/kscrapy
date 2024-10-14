@@ -186,6 +186,7 @@ The method **on_process_item** can be customized in order to filter out items fr
 - `KSCRAPY_PRODUCER_CALLBACKS` -  Enable or disable asynchronous message delivery callbacks. Default: `False`.
 - `KSCRAPY_PRODUCER_CALLBACKS` -  Enable or disable asynchronous message delivery callbacks. Default: `False`.
 - `KSCRAPY_USE_PLAYWRIGHT` -  Enable or disable the use of Playwright. Default: `False`.
+- `KSCRAPY_DONT_FILTER` -  Enable or disable filtering requests by scrapy framework. Default: `False`.
   
 ### Customising deserialisation
 You can override the **process_kafka_message** method to customize how Kafka messages are deserialized. This is useful for handling custom message formats or performing specific data transformations:
